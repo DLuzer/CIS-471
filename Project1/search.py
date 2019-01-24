@@ -112,9 +112,9 @@ def depthFirstSearch(problem):
                 current_path = all_paths.pop()
             if current_node not in Visited:
                 break
-        # print("")
-        # print("-------New Node-------")
-        # print("Current node:     ", current_node[0], current_node[1])
+        print("")
+        print("-------New Node-------")
+        print("Current node:     ", current_node)
 
         # if we are at the goal, break loop and send directions to game
         if problem.isGoalState(current_node) == True:
@@ -126,30 +126,29 @@ def depthFirstSearch(problem):
         currentSuccessors = problem.getSuccessors(current_node)
         # for each successor, check if it is a legal action
         for state, dir, cost in currentSuccessors:
-            # print("Legal successor?: ", state, dir)
+            print("Legal successor?: ", state, dir)
 
             # if action is legal and not visited yet, add to fringe and current_path
             if problem.getCostOfActions(current_path + [dir]) != 999999 and state not in Visited:
-                # print("Yes, + to fringe: ", state, dir)
+                print("Yes, + to fringe: ", state, dir)
                 Fringe.push(state)
                 all_paths.push(current_path + [dir])
             # else do nothing
             else:
-                continue
-                # print("No.")
+                print("No.")
 
-        # print("Current paths in consideration:")
+        #print("Current paths in consideration:")
         # for path in all_paths.list:
             # print(path)
-        # print("")
+        print("")
 
-    # print("")
+    print("")
 
-    # print("----------------------------------------")
-    # print("-------------DONE WITH LOOP-------------")
-    # print("----------------------------------------")
-    # print("OUR ANSWER: ", current_path)
-    # print("")
+    print("----------------------------------------")
+    print("-------------DONE WITH LOOP-------------")
+    print("----------------------------------------")
+    print("OUR ANSWER: ", current_path)
+    print("")
     return current_path
     # util.raiseNotDefined()
 
@@ -181,9 +180,9 @@ def breadthFirstSearch(problem):
             if current_node not in Visited:
                 break
 
-        # print("")
-        # print("-------New Node-------")
-        # print("Current node:     ", current_node[0], current_node[1])
+        print("")
+        print("-------New Node-------")
+        print("Current node:     ", current_node)
 
         # if we are at the goal, break loop and send directions to game
         if problem.isGoalState(current_node) == True:
@@ -191,33 +190,34 @@ def breadthFirstSearch(problem):
 
         # mark state as visited
         Visited.append(current_node)
-        # print("visited: ", Visited)
 
         currentSuccessors = problem.getSuccessors(current_node)
-        # for each successor, check if it is a legal action
+
+        # for each succsessor, check if it is a legal action
         for state, dir, cost in currentSuccessors:
-            # print("Legal successor?: ", state, dir)
+            print("Legal successor?: ", state, dir)
 
             # if action is legal and not visited yet, add to fringe and current_path
             if problem.getCostOfActions(current_path + [dir]) != 999999 and state not in Visited:
-                # print("Yes, + to fringe: ", state, dir)
+                print("Yes, + to fringe: ", state, dir)
                 Fringe.push(state)
                 all_paths.push(current_path + [dir])
             # else do nothing
             else:
-                continue
-                # print("No.")
+                print("No.")
 
         # print("Current paths in consideration:")
-        # print("")
+        # for path in all_paths.list:
+            # print(path)
+        print("")
 
-    # print("")
+    print("")
 
-    # print("----------------------------------------")
-    # print("-------------DONE WITH LOOP-------------")
-   # print("----------------------------------------")
-   # print("OUR ANSWER: ", current_path)
-    # print("")
+    print("----------------------------------------")
+    print("-------------DONE WITH LOOP-------------")
+    print("----------------------------------------")
+    print("OUR ANSWER: ", current_path)
+    print("")
     return current_path
     # util.raiseNotDefined()
 
@@ -316,36 +316,36 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     Fringe = util.PriorityQueue()
 
-    #Keeps track of path coordinates EX: (1,1)
+    # Keeps track of path coordinates EX: (1,1)
     Visited = []
 
     ASTARdirections = []
     Sketchy_path = []
 
-    #Get pacman's starting position
+    # Get pacman's starting position
     root = problem.getStartState()
     Fringe.push((root, "", 0), 0)
 
     while(Fringe.isEmpty() == False):
         #print("Fringe before pop:", Fringe.heap)
         current_node = Fringe.pop()
-        print("Fringe - nodes left:",Fringe.heap)
+        print("Fringe - nodes left:", Fringe.heap)
         #print(Fringe.count,"left in the Fringe")
 
-        #If the current node isn't the root, get direction
+        # If the current node isn't the root, get direction
         if current_node[0] != root:
             ASTARdirections.append(current_node[1])
             Sketchy_path.append(current_node[1])
 
         print("Current path:", ASTARdirections)
-        
-        #If the current node is the goal state, break out of while loop
+
+        # If the current node is the goal state, break out of while loop
         if problem.isGoalState(current_node[0]) == True:
             break
 
         Visited.append(current_node[0])
-        
-        #Priority queue used to store the valid successors with priority 
+
+        # Priority queue used to store the valid successors with priority
         ordered_successors = util.PriorityQueue()
 
         successors = problem.getSuccessors(current_node[0])
@@ -356,17 +356,17 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                 fn = heuristic_cost + actual_cost
                 ordered_successors.push((next_node, fn), fn)
             else:
-                print("Failed:",next_node)
+                print("Failed:", next_node)
         print("All successors:", ordered_successors.heap)
 
-        #Current path has no successors, go back to an intersection
+        # Current path has no successors, go back to an intersection
         if ordered_successors.count == 0:
             for i in range(len(Sketchy_path)):
                 ASTARdirections = ASTARdirections[:-1]
             Sketchy_path = []
-        #Current path has 1 or more available successors
+        # Current path has 1 or more available successors
         else:
-            #Current path is an intersection with more than 1 successor that can be explored
+            # Current path is an intersection with more than 1 successor that can be explored
             if ordered_successors.count > 1:
                 print("HIT A INTERSECTION:", ASTARdirections)
                 Sketchy_path = []
@@ -375,7 +375,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                 Fringe.push(next_successor[0], next_successor[1])
 
     #test = ['North', 'North', 'West', 'West', 'West', 'West', 'North', 'North', 'West', 'West', 'South', 'South', 'West', 'West', 'East', 'East']
-    #return test
+    # return test
     return ASTARdirections
 
     util.raiseNotDefined()
