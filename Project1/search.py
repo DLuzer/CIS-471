@@ -316,74 +316,66 @@ def aStarSearch(problem, heuristic=nullHeuristic):
 
     Fringe = util.PriorityQueue()
 
-    # Keeps track of path coordinates EX: (1,1)
+    #Keeps track of path coordinates EX: (1,1)
     Visited = []
-
-    # Alternative_nodes = util.PriorityQueue()
 
     ASTARdirections = []
     Sketchy_path = []
 
+    #Get pacman's starting position
     root = problem.getStartState()
     Fringe.push((root, "", 0), 0)
 
     while(Fringe.isEmpty() == False):
-        # print("Fringe before pop:", Fringe.heap)
+        #print("Fringe before pop:", Fringe.heap)
         current_node = Fringe.pop()
-        # print("Successful node:", current_node)
-        # print(Fringe.count, "left in the Fringe")
+        print("Fringe - nodes left:",Fringe.heap)
+        #print(Fringe.count,"left in the Fringe")
 
+        #If the current node isn't the root, get direction
+        if current_node[0] != root:
+            ASTARdirections.append(current_node[1])
+            Sketchy_path.append(current_node[1])
+
+        print("Current path:", ASTARdirections)
+        
+        #If the current node is the goal state, break out of while loop
         if problem.isGoalState(current_node[0]) == True:
             break
 
         Visited.append(current_node[0])
-
+        
+        #Priority queue used to store the valid successors with priority 
         ordered_successors = util.PriorityQueue()
 
-        for next_node in problem.getSuccessors(current_node[0]):
-            if next_node[0] in Visited:
-                # print("Failed node - In Visited:", next_node)
-                # print(Visited)
-                continue
-            if problem.getCostOfActions(ASTARdirections + [next_node[1]]) == 999999:
-                # print("Failed node - Invalid Path:", next_node)
-                # print(ASTARdirections + [next_node[1]])
-                continue
-            heuristic_cost = heuristic(next_node[0], problem)
-            actual_cost = next_node[2]
+        successors = problem.getSuccessors(current_node[0])
+        for next_node in successors:
+            if next_node[0] not in Visited and problem.getCostOfActions(ASTARdirections + [next_node[1]]) != 999999:
+                heuristic_cost = heuristic(next_node[0], problem)
+                actual_cost = next_node[2]
+                fn = heuristic_cost + actual_cost
+                ordered_successors.push((next_node, fn), fn)
+            else:
+                print("Failed:",next_node)
+        print("All successors:", ordered_successors.heap)
 
-            fn = heuristic_cost + actual_cost
-            ordered_successors.push((next_node, fn), fn)
-
-            # print(next_node, "- f(n):", fn)
-        # print("All successors:", ordered_successors.heap)
-        # Went down the wrong path
+        #Current path has no successors, go back to an intersection
         if ordered_successors.count == 0:
-            # print("Sketchy path:", Sketchy_path)
-            # print("ASTARdirections:", ASTARdirections)
             for i in range(len(Sketchy_path)):
-                del ASTARdirections[-1]
+                ASTARdirections = ASTARdirections[:-1]
             Sketchy_path = []
-        # Have multiple paths, picks the best one depending on f(n) = g(n) + h(n)
+        #Current path has 1 or more available successors
         else:
-            # print("First:", ordered_successors.count)
-            if ordered_successors.count == 1:
-                continue
-            chosen_successor = ordered_successors.pop()
-            # print("Chosen successor:", chosen_successor)
-            ASTARdirections.append(chosen_successor[0][1])
-            Fringe.push(chosen_successor[0], chosen_successor[1])
-
+            #Current path is an intersection with more than 1 successor that can be explored
+            if ordered_successors.count > 1:
+                print("HIT A INTERSECTION:", ASTARdirections)
+                Sketchy_path = []
             while ordered_successors.isEmpty() == False:
-                # print("Next:", ordered_successors.count)
                 next_successor = ordered_successors.pop()
-                # print("Next successor:", next_successor)
                 Fringe.push(next_successor[0], next_successor[1])
-                # Alternative_nodes.push(next_successor[0], next_successor[1])
 
-    test = ['North', 'North', 'North']
-
-    # return test
+    #test = ['North', 'North', 'West', 'West', 'West', 'West', 'North', 'North', 'West', 'West', 'South', 'South', 'West', 'West', 'East', 'East']
+    #return test
     return ASTARdirections
 
     util.raiseNotDefined()
