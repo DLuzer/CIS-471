@@ -314,69 +314,33 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
 
-    Fringe = util.PriorityQueue()
+    from game import Directions
 
-    # Keeps track of path coordinates EX: (1,1)
+    Fringe = util.PriorityQueue() 
     Visited = []
 
-    ASTARdirections = []
-    Sketchy_path = []
-
-    # Get pacman's starting position
     root = problem.getStartState()
-    Fringe.push((root, "", 0), 0)
+    Fringe.push((root,[],0),0)
 
-    while(Fringe.isEmpty() == False):
-        #print("Fringe before pop:", Fringe.heap)
+    current_node = Fringe.pop()
+    Visited.append(current_node[0])
+    while problem.isGoalState(current_node[0]) == False:
+        for next_node in problem.getSuccessors(current_node[0]):
+            Check_visited = False
+            for path in Visited:
+                if next_node[0] == path: 
+                    Check_visited = True
+                    break
+            if Check_visited == False:
+                fn = current_node[2] + next_node[2] + heuristic(next_node[0],problem)
+                new_cost = current_node[2] + next_node[2]
+                new_dir = current_node[1] + [next_node[1]]
+                Fringe.push((next_node[0], new_dir, new_cost),fn) 
+                Visited.append(next_node[0])
+                
         current_node = Fringe.pop()
-        print("Fringe - nodes left:", Fringe.heap)
-        #print(Fringe.count,"left in the Fringe")
 
-        # If the current node isn't the root, get direction
-        if current_node[0] != root:
-            ASTARdirections.append(current_node[1])
-            Sketchy_path.append(current_node[1])
-
-        print("Current path:", ASTARdirections)
-
-        # If the current node is the goal state, break out of while loop
-        if problem.isGoalState(current_node[0]) == True:
-            break
-
-        Visited.append(current_node[0])
-
-        # Priority queue used to store the valid successors with priority
-        ordered_successors = util.PriorityQueue()
-
-        successors = problem.getSuccessors(current_node[0])
-        for next_node in successors:
-            if next_node[0] not in Visited and problem.getCostOfActions(ASTARdirections + [next_node[1]]) != 999999:
-                heuristic_cost = heuristic(next_node[0], problem)
-                actual_cost = next_node[2]
-                fn = heuristic_cost + actual_cost
-                ordered_successors.push((next_node, fn), fn)
-            else:
-                print("Failed:", next_node)
-        print("All successors:", ordered_successors.heap)
-
-        # Current path has no successors, go back to an intersection
-        if ordered_successors.count == 0:
-            for i in range(len(Sketchy_path)):
-                ASTARdirections = ASTARdirections[:-1]
-            Sketchy_path = []
-        # Current path has 1 or more available successors
-        else:
-            # Current path is an intersection with more than 1 successor that can be explored
-            if ordered_successors.count > 1:
-                print("HIT A INTERSECTION:", ASTARdirections)
-                Sketchy_path = []
-            while ordered_successors.isEmpty() == False:
-                next_successor = ordered_successors.pop()
-                Fringe.push(next_successor[0], next_successor[1])
-
-    #test = ['North', 'North', 'West', 'West', 'West', 'West', 'North', 'North', 'West', 'West', 'South', 'South', 'West', 'West', 'East', 'East']
-    # return test
-    return ASTARdirections
+    return current_node[1]
 
     util.raiseNotDefined()
 
