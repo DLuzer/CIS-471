@@ -73,7 +73,6 @@ def tinyMazeSearch(problem):
     w = Directions.WEST
     return [s, s, w, s, w, w, s, w]
 
-
 def depthFirstSearch(problem):
     """
     Search the deepest nodes in the search tree first.
@@ -88,7 +87,6 @@ def depthFirstSearch(problem):
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    "*** YOUR CODE HERE ***"
 
     # Data Structs
     BFSdirections = []
@@ -152,10 +150,9 @@ def depthFirstSearch(problem):
     return current_path
     # util.raiseNotDefined()
 
-
 def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
+
+    #Search the shallowest nodes in the search tree first.
 
     # Data Structs
     BFSdirections = []
@@ -221,10 +218,8 @@ def breadthFirstSearch(problem):
     return current_path
     # util.raiseNotDefined()
 
-
 def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
+    #Search the node of least total cost first.
 
     # Data Structs
     BFSdirections = []
@@ -301,7 +296,6 @@ def uniformCostSearch(problem):
     return current_path
     # util.raiseNotDefined()
 
-
 def nullHeuristic(state, problem=None):
     """
     A heuristic function estimates the cost from the current state to the nearest
@@ -323,22 +317,37 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     Fringe.push((root,[],0),0)
 
     current_node = Fringe.pop()
-    Visited.append(current_node[0])
+    print("Root node:", current_node[0])
+
+    #Put root in visited
+    Visited.append((current_node[0],current_node[2] + heuristic(root,problem)))
+
     while problem.isGoalState(current_node[0]) == False:
+        #Check successors of current node for possible paths to take
         for next_node in problem.getSuccessors(current_node[0]):
             Check_visited = False
-            for path in Visited:
-                if next_node[0] == path: 
+            Check_cost = current_node[2] + next_node[2]
+            for path, cost in Visited:
+                if Check_cost >= cost and next_node[0] == path: 
                     Check_visited = True
                     break
+
+            #Checked the next node to take and it hasn't been visited
             if Check_visited == False:
+
+                #Priority of the successor that will be pushed onto the Fringe
                 fn = current_node[2] + next_node[2] + heuristic(next_node[0],problem)
                 new_cost = current_node[2] + next_node[2]
                 new_dir = current_node[1] + [next_node[1]]
+
+                #Push successor onto the Fringe for evaluation in the future
+                print("Successor:", next_node[0],"with priority:",fn)
                 Fringe.push((next_node[0], new_dir, new_cost),fn) 
-                Visited.append(next_node[0])
-                
+                Visited.append((next_node[0], current_node[2] + next_node[2]))
+        
+        #Next node for evaluation
         current_node = Fringe.pop()
+        print("Next node:", current_node[0])
 
     return current_node[1]
 
