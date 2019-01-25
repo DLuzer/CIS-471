@@ -513,8 +513,11 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** YOUR CODE HERE ***"
-    return 0
-
+ 
+    if problem != () and problem.isGoalState(state):
+        return 0
+      
+    return state[1].count()
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -548,6 +551,7 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
+        return search.astar(problem)
         util.raiseNotDefined()
 
 
@@ -585,6 +589,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x, y = state
 
         "*** YOUR CODE HERE ***"
+
+        return self.food[x][y]
         util.raiseNotDefined()
 
 
