@@ -324,15 +324,18 @@ class CornersProblem(search.SearchProblem):
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
+
         "*** YOUR CODE HERE ***"
         visited = []
-        return (self.startingPosition, visited)
+
+        return self.startingPosition, visited
         # util.raiseNotDefined()
 
     def isGoalState(self, state):
         """
         Returns whether this search state is a goal state of the problem.
         """
+
         "*** YOUR CODE HERE ***"
         return len(state[1]) == 4
 
@@ -373,6 +376,7 @@ class CornersProblem(search.SearchProblem):
          #   self._visited[state] = True
          #   self._visitedlist.append(state)
         self._expanded += 1
+
         return successors
 
     def getCostOfActions(self, actions):
@@ -389,7 +393,6 @@ class CornersProblem(search.SearchProblem):
             if self.walls[x][y]:
                 return 999999
         return len(actions)
-
 
 def cornersHeuristic(state, problem):
     """
@@ -408,7 +411,6 @@ def cornersHeuristic(state, problem):
     # These are the walls of the maze, as a Grid (game.py)
     walls = problem.walls
 
-    "*** YOUR CODE HERE ***"
     return 0  # Default to trivial solution
 
 
@@ -511,13 +513,24 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
+
     "*** YOUR CODE HERE ***"
- 
-    if problem != () and problem.isGoalState(state):
+
+    position, foodGrid = state
+
+    food_list = foodGrid.asList()
+    if len(food_list) == 0:
         return 0
-      
-    return state[1].count()
+
+    sum_list = []
+
+    for f in food_list:
+        sum_list.append((f, util.manhattanDistance(f,position)))
+
+    Best_food, Best_Cost = min(sum_list, key=lambda x: x[1])
+    
+    # subtract 1 so we don't double count the closest food
+    return foodGrid.count() + Best_Cost - 1
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -544,15 +557,17 @@ class ClosestDotSearchAgent(SearchAgent):
         Returns a path (a list of actions) to the closest dot, starting from
         gameState.
         """
+
+        "*** YOUR CODE HERE ***"
+
         # Here are some useful elements of the startState
         startPosition = gameState.getPacmanPosition()
         food = gameState.getFood()
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        "*** YOUR CODE HERE ***"
         return search.astar(problem)
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
 
 
 class AnyFoodSearchProblem(PositionSearchProblem):
@@ -586,12 +601,13 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         The state is Pacman's position. Fill this in with a goal test that will
         complete the problem definition.
         """
-        x, y = state
 
         "*** YOUR CODE HERE ***"
 
+        x, y = state
+
         return self.food[x][y]
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
 
 
 def mazeDistance(point1, point2, gameState):

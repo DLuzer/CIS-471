@@ -328,6 +328,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             Check_visited = False
             Check_cost = current_node[2] + next_node[2]
             for path, cost in Visited:
+                #If next node is found in Visited, mark Check_visited as True 
                 if Check_cost >= cost and next_node[0] == path: 
                     Check_visited = True
                     break
