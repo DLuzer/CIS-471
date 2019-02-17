@@ -165,7 +165,48 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        PACMAN = 0
+
+        #PACMAN - MAX FUNCTION
+        def max_agent(gameState, current_depth, num_ghosts):
+            if current_depth == 0 or gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)
+            max_value = float("-inf")
+            list_of_moves = gameState.getLegalActions(PACMAN)
+            for move in list_of_moves:
+                max_value = max(max_value, min_agent(gameState.generateSuccessor(PACMAN,move), current_depth - 1, num_ghosts, 1))
+            return max_value
+
+        #GHOSTS - MIN FUNCTION
+        def min_agent(gameState, current_depth, num_ghosts, ghost_ind):
+            if current_depth == 0 or gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)
+            min_value = float("inf")
+
+            list_of_moves = gameState.getLegalActions(ghost_ind)
+            if ghost_ind == num_ghosts:
+                for move in list_of_moves:
+                    min_value = min(min_value, max_agent(gameState.generateSuccessor(ghost_ind, move), current_depth - 1, num_ghosts))
+            else:
+                for move in list_of_moves:
+                    min_value = min(min_value, min_agent(gameState.generateSuccessor(ghost_ind, move), current_depth, num_ghosts, ghost_ind + 1))
+
+            return min_value
+
+        #DISPATCH - Calls Min Agent which calls Max Agent
+        def dispatch(gameState):
+            current_action = 'Stop'
+            move_list = gameState.getLegalActions()
+            points = float("-inf")
+            number_of_ghosts = gameState.getNumAgents() - 1
+            for move in move_list:
+                temp_points = points
+                points = max(points, min_agent(gameState.generateSuccessor(PACMAN, move), self.depth, number_of_ghosts, 1))
+                if points > temp_points:
+                    current_action = move
+            return current_action
+        
+        return dispatch(gameState)
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
