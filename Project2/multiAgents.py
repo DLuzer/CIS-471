@@ -10,7 +10,9 @@
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # Student side autograding was added by Brad Miller, Nick Hay, and
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
-
+#
+# Authors: Danny Lu, Shohei Etzel
+# Class: University of Oregon, CIS 471/571: Introduction to Artificial Intelligence
 
 from util import manhattanDistance
 from game import Directions
@@ -18,7 +20,6 @@ import random
 import util
 
 from game import Agent
-
 
 class ReflexAgent(Agent):
     """
@@ -163,49 +164,63 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        PACMAN = 0
 
-        #PACMAN - MAX FUNCTION
-        def max_agent(gameState, current_depth, num_ghosts):
-            if current_depth == 0 or gameState.isWin() or gameState.isLose():
+        # PACMAN AGENT
+        def max_agent(gameState, current_depth, agent):
+            pacman_moves = gameState.getLegalActions(agent)
+            if pacman_moves == None: # No more possible moves for PACMAN
                 return self.evaluationFunction(gameState)
-            max_value = float("-inf")
-            list_of_moves = gameState.getLegalActions(PACMAN)
-            for move in list_of_moves:
-                max_value = max(max_value, min_agent(gameState.generateSuccessor(PACMAN,move), current_depth - 1, num_ghosts, 1))
+               
+            max_value = [float("-inf"), 'Stop'] # Initialize max_value
+
+            for move in pacman_moves:
+
+                temp_value = dispatch(gameState.generateSuccessor(agent, move), current_depth, agent+1)
+                
+                if type(temp_value) == list:
+                    temp_value = temp_value[0]
+                elif type(temp_value) != list:
+                    temp_value = temp_value
+                if temp_value > max_value[0]:
+                    max_value = [temp_value, move]
+
             return max_value
 
-        #GHOSTS - MIN FUNCTION
-        def min_agent(gameState, current_depth, num_ghosts, ghost_ind):
-            if current_depth == 0 or gameState.isWin() or gameState.isLose():
+        # GHOST AGENT
+        def min_agent(gameState, current_depth, agent):
+            ghost_moves = gameState.getLegalActions(agent)
+            if ghost_moves == None: # No more possible moves for GHOST
                 return self.evaluationFunction(gameState)
-            min_value = float("inf")
 
-            list_of_moves = gameState.getLegalActions(ghost_ind)
-            if ghost_ind == num_ghosts:
-                for move in list_of_moves:
-                    min_value = min(min_value, max_agent(gameState.generateSuccessor(ghost_ind, move), current_depth - 1, num_ghosts))
-            else:
-                for move in list_of_moves:
-                    min_value = min(min_value, min_agent(gameState.generateSuccessor(ghost_ind, move), current_depth, num_ghosts, ghost_ind + 1))
+            min_value = [float("inf"),'Stop'] # Initialize min_value
+
+            for move in ghost_moves:
+                
+                temp_value = dispatch(gameState.generateSuccessor(agent, move), current_depth, agent + 1)
+                
+                if type(temp_value) == list:
+                    temp_value = temp_value[0]
+                elif type(temp_value) != list:
+                    temp_value = temp_value
+                if temp_value < min_value[0]:
+                    min_value = [temp_value, move]
 
             return min_value
-
-        #DISPATCH - Calls Min Agent which calls Max Agent
-        def dispatch(gameState):
-            current_action = 'Stop'
-            move_list = gameState.getLegalActions()
-            points = float("-inf")
-            number_of_ghosts = gameState.getNumAgents() - 1
-            for move in move_list:
-                temp_points = points
-                points = max(points, min_agent(gameState.generateSuccessor(PACMAN, move), self.depth, number_of_ghosts, 1))
-                if points > temp_points:
-                    current_action = move
-            return current_action
         
-        return dispatch(gameState)
-
+        # DISPATCH FUNCTION: Calls min_agent, and max_agent
+        def dispatch(gameState, current_depth, agent):
+            agents = gameState.getNumAgents()
+            if agent >= agents:
+                current_depth -= 1
+                agent = 0
+            if current_depth == 0 or gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)
+            elif agent == 0:
+                return max_agent(gameState, current_depth, agent)
+            else:
+                return min_agent(gameState, current_depth, agent)
+        
+        return dispatch(gameState, self.depth, 0)[1]
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -217,7 +232,68 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # PACMAN AGENT
+        def max_agent(gameState, current_depth, agent, alpha, beta):
+            pacman_moves = gameState.getLegalActions(agent)
+            if pacman_moves == None: # No more possible moves for PACMAN
+                return self.evaluationFunction(gameState)
+
+            max_value = [float("-inf"), 'Stop']
+
+            for move in pacman_moves:
+
+                temp_value = dispatch(gameState.generateSuccessor(agent, move), current_depth, agent + 1, alpha, beta)
+                
+                if type(temp_value) == list:
+                    temp_value = temp_value[0]
+                elif type(temp_value) != list:
+                    temp_value = temp_value
+                if temp_value > max_value[0]:
+                    max_value = [temp_value, move]
+                if temp_value > beta:
+                    return [temp_value, move]
+                alpha = max(temp_value, alpha)
+
+            return max_value
+        
+        # GHOST AGENT
+        def min_agent(gameState, current_depth, agent, alpha, beta):
+            ghost_moves = gameState.getLegalActions(agent)
+            if ghost_moves == None: # No more possible moves for GHOST
+                return self.evaluationFunction(gameState)
+
+            min_value = [float("inf"), 'Stop']
+
+            for move in ghost_moves:
+
+                temp_value = dispatch(gameState.generateSuccessor(agent, move), current_depth, agent + 1, alpha, beta)
+                
+                if type(temp_value) == list:
+                    temp_value = temp_value[0]
+                elif type(temp_value) != list:
+                    temp_value = temp_value
+                if temp_value < min_value[0]:
+                    min_value = [temp_value, move]
+                if temp_value < alpha:
+                    return [temp_value, move]
+                beta = min(temp_value, beta)
+
+            return min_value
+        
+        # DISPATCH FUNCTION: Calls min_agent, and max_agent
+        def dispatch(gameState, current_depth, agent, alpha, beta):
+            agents = gameState.getNumAgents()
+            if agent >= agents:
+                current_depth -= 1
+                agent = 0
+            if current_depth == 0 or gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)
+            elif agent == 0:
+                return max_agent(gameState, current_depth, agent, alpha, beta)
+            else:
+                return min_agent(gameState, current_depth, agent, alpha, beta)
+        
+        return dispatch(gameState, self.depth, 0, float("-inf"), float("inf"))[1]
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
