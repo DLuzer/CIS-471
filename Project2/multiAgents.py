@@ -85,21 +85,19 @@ class ReflexAgent(Agent):
         posList = list(successorGameState.getPacmanPosition())
         negINF = -float("inf")
 
-
-        #trivial case: action is stop
+        # trivial case: action is stop
         if action == 'Stop':
             return negINF
 
-        #otherwise, check states for if ghostPos == pacPos
+        # otherwise, check states for if a "not scared" ghost is at the same position as Pac-Man
         for state in newGhostStates:
             if state.getPosition() == tuple(posList) and state.scaredTimer is 0:
                 return negINF
 
-        #if not, use manhattan heuristic to determine max distance
+        # if not, use manhattan heuristic to determine closest food pellet
         for dot in foodList:
             distList.append(-1 * manhattanDistance(
                 (dot[0], dot[1]), (posList[0], posList[1])))
-
         return max(distList)
         # return successorGameState.getScore()
 
@@ -194,7 +192,56 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        curDepth, curIndex = 0, 0
+        retAction = self.value(gameState, curIndex, curDepth)
+        return retAction[0]
+
+    def value(self, gameState, curIndex, curDepth):
+        # trivial checks
+        if curIndex >= gameState.getNumAgents():
+            curIndex = 0
+            curDepth += 1
+
+        if curDepth == self.depth:
+            return self.evaluationFunction(gameState)
+
+        # if Pac-Man node, want to find Max; if not, want to find probabilities
+        if curIndex == self.index:
+            # isMax == True
+            return self.expMax(True, gameState, curIndex, curDepth)
+        else:
+            # isMax == False
+            return self.expMax(False, gameState, curIndex, curDepth)
+
+    def expMax(self, isMax, gameState, curIndex, curDepth):
+        if not gameState.getLegalActions(curIndex):
+            return self.evaluationFunction(gameState)
+
+        # set initial value
+        # empty action; 0 for exp and negative infinity for Max
+        v = ["", 0] if isMax is False else ("", -float("inf"))
+
+        # set probabilities (for use in exp)
+        expProb = 1.0 / len(gameState.getLegalActions(curIndex))
+
+        # recursively update v values for legal action available
+        for action in gameState.getLegalActions(curIndex):
+            retVal = self.value(gameState.generateSuccessor(
+                curIndex, action), curIndex + 1, curDepth)
+            if type(retVal) is tuple:
+                retVal = retVal[1]
+            if isMax == False:
+                v[0] = action
+                v[1] += retVal * expProb
+            elif isMax == True:
+                vMax = max(v[1], retVal)
+
+                if vMax is not v[1]:
+                    v = (action, vMax)
+
+        retVal = tuple(v) if isMax == False else v
+
+        return retVal
 
 
 def betterEvaluationFunction(currentGameState):
@@ -202,10 +249,77 @@ def betterEvaluationFunction(currentGameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION:
+    FACTORS WE CONSIDERED (for each state):
+     - Current game score
+     - Number of food dots left
+     - Distance to ghosts and their state (scared, not scared)
+     - Distance to closest and second closest food
+
+
+    WHY:
+     - CURRENT GAME SCORE is useful for implicitly incentivizing PacMan (to not bump into ghosts, to eat food, to eat scared ghosts). A times 10 multiplier was added to this baseline value to increase its importance.
+
+     - From there, we added incentizes and multipliers to prioritize certain things:
+        - FOOD LEFT: A negative incentive was added for the amount of food left, incentivizing Pac-Man to eat food whenever possibe. A times 10 multiplier was added to this value as well.
+
+        - GHOSTS 3 blocks or closer are a large threat and should be avoided at all costs; increasingly larger negative incentives were added to ensure Pac-Man would not die.
+
+        - SCARED GHOSTS 3 blocks or closer are a great opportunity to gain points; a set positive incentive was added for Pac-Man to go chase scared ghosts.
+
+        - CLOSEST FOOD: The two closest foods were both considered to incentivize Pac-Man to travel towards food. We originally only considered the closest food, but ran into problems when one food dot was isolated. In this case, Pac-Man would not eat it, as it would greatly increase the closestFood distance if he did. There was a larger incentive to sit right next to the dot than there was to eat it! Therefore, we decided to add the second closest food as well, to help decrease the effects of a single isolated food dot on the overall evaluation.
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    ghostList = currentGameState.getGhostStates()
+    foodList = currentGameState.getFood().asList()
+    posList = list(currentGameState.getPacmanPosition())
+
+    distToFoodList = []
+    ghostInfo = []                          # 2D array: [dist, isScared]
+    distToCapsuleList = []
+    score = 0
+
+    for state in ghostList:                 # get info for all ghosts
+        if state.scaredTimer is not 0:      # scared ghost
+            ghostInfo.append([0, 1])
+        else:                               # not scared ghost
+            ghostXY = state.getPosition()
+            manDist = manhattanDistance(
+                (ghostXY[0], ghostXY[1]), (posList[0], posList[1]))
+            ghostInfo.append([manDist, 0])
+
+    for dot in foodList:                    # get manhattan dist for all food dots
+        distToFoodList.append(-1 * manhattanDistance(
+            (dot[0], dot[1]), (posList[0], posList[1])))
+
+    # scoring logic
+    closestFood = 0
+    closestFood2 = 0
+    closestFood3 = 0
+    ghostScore = 0
+    curScore = currentGameState.getScore()
+    # incentivize with manhattan distance values for two closest food dots
+
+    temp = distToFoodList
+    if temp:
+        closestFood = max(temp)
+        temp.remove(closestFood)
+        if temp:
+            closestFood2 = max(temp)
+
+    # positive scores for scared ghosts nearby, (increasing) negative scores for regular ghosts nearby
+
+    for ghost in ghostInfo:
+        if ghost[0] == 3 and ghost[1] == 0:  # ghost within 3 spots = get away!
+            ghostScore -= 25
+        elif ghost[0] == 2 and ghost[1] == 0:
+            ghostScore -= 50
+        elif ghost[0] <= 1 and ghost[1] == 0:
+            ghostScore -= 100
+        elif ghost[0] <= 1 and ghost[1] == 1:
+            ghostScore += 100
+
+    return closestFood + 2 * closestFood2 + ghostScore + 10 * curScore - 10 * len(foodList)
 
 
 # Abbreviation
