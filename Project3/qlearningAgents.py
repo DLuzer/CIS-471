@@ -42,6 +42,8 @@ class QLearningAgent(ReinforcementAgent):
         "You can initialize Q-values here..."
         ReinforcementAgent.__init__(self, **args)
 
+        self.q_values = {}
+
         "*** YOUR CODE HERE ***"
 
     def getQValue(self, state, action):
@@ -51,7 +53,15 @@ class QLearningAgent(ReinforcementAgent):
           or the Q node value otherwise
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        if (state, action) in self.q_values:
+          return self.q_values[(state, action)]
+        else:
+          return 0.0
+
+        # self.q_values[(state, action)] if (state, action) in self.q_values else 0.0
+
+        #util.raiseNotDefined()
 
 
     def computeValueFromQValues(self, state):
@@ -62,7 +72,15 @@ class QLearningAgent(ReinforcementAgent):
           terminal state, you should return a value of 0.0.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        q_values = []
+        for action in self.getLegalActions(state):
+          q_values.append(self.getQValue(state, action))
+        if len(q_values) == 0:
+          return 0.0
+        return max(q_values)
+
+        #util.raiseNotDefined()
 
     def computeActionFromQValues(self, state):
         """
@@ -71,7 +89,18 @@ class QLearningAgent(ReinforcementAgent):
           you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        best_value = self.getValue(state)
+        best_actions = []
+        for action in self.getLegalActions(state):
+          if self.getQValue(state, action) == best_value:
+            best_actions.append(action)
+        if len(best_actions) == 0:
+          return None
+        else:
+          return random.choice(best_actions)
+
+        #util.raiseNotDefined()
 
     def getAction(self, state):
         """
@@ -88,7 +117,13 @@ class QLearningAgent(ReinforcementAgent):
         legalActions = self.getLegalActions(state)
         action = None
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        if util.flipCoin(self.epsilon):
+          action = random.choice(legalActions)
+        else:
+          action = self.getPolicy(state)
+
+        #util.raiseNotDefined()
 
         return action
 
@@ -102,7 +137,11 @@ class QLearningAgent(ReinforcementAgent):
           it will be called on your behalf
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        updated_value = (1 - self.alpha) * self.getQValue(state, action) + self.alpha * (reward + self.discount * self.getValue(nextState))
+        self.q_values[(state, action)] = updated_value
+
+        #util.raiseNotDefined()
 
     def getPolicy(self, state):
         return self.computeActionFromQValues(state)
@@ -165,14 +204,26 @@ class ApproximateQAgent(PacmanQAgent):
           where * is the dotProduct operator
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        features = self.featExtractor.getFeatures(state, action)
+        result = 0
+        for feature in features:
+          result += self.weights[feature] * features[feature]
+        return result
+
+        #util.raiseNotDefined()
 
     def update(self, state, action, nextState, reward):
         """
            Should update your weights based on transition
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        features = self.featExtractor.getFeatures(state, action)
+        update = self.discount*self.getValue(nextState) + reward - self.getQValue(state, action)
+        for feature in features:
+          self.weights[feature] += self.alpha * update * features[feature]
+        #util.raiseNotDefined()
 
     def final(self, state):
         "Called at the end of each game."
@@ -183,4 +234,5 @@ class ApproximateQAgent(PacmanQAgent):
         if self.episodesSoFar == self.numTraining:
             # you might want to print your weights here for debugging
             "*** YOUR CODE HERE ***"
+            print ("weight: ", self.weights)
             pass

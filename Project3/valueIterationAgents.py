@@ -196,3 +196,48 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
   def runValueIteration(self):
     "*** YOUR CODE HERE ***"
+
+    predecessors = {}
+    PQ = util.PriorityQueue()
+
+    for state in self.mdp.getStates():
+      if self.mdp.isTerminal(state) == False:
+        for action in self.mdp.getPossibleActions(state):
+          for next_state, probability in self.mdp.getTransitionStatesAndProbs(state, action):
+            if next_state in predecessors:
+              predecessors[next_state].add(state)
+            else:
+              predecessors[next_state] = {state}
+    
+    for state in self.mdp.getStates():
+      if self.mdp.isTerminal(state) == False:
+        q_values = []
+        for action in self.mdp.getPossibleActions(state):
+          q = self.computeQValueFromValues(state, action)
+          q_values.append(q)
+        diff = abs(max(q_values) - self.values[state])
+        PQ.update(state, -diff)
+
+    for i in range(self.iterations):
+      if PQ.isEmpty() == True:
+        break
+      temp_state = PQ.pop()
+      if self.mdp.isTerminal(temp_state) == False:
+        q_values = []
+        for action in self.mdp.getPossibleActions(temp_state):
+          q = self.computeQValueFromValues(temp_state, action)
+          q_values.append(q)
+        self.values[temp_state] = max(q_values)
+    
+      for predecessor in predecessors[temp_state]:
+        if self.mdp.isTerminal(predecessor) == False:
+          q_values = []
+          for action in self.mdp.getPossibleActions(predecessor):
+            q = self.computeQValueFromValues(predecessor, action)
+            q_values.append(q)
+          diff = abs(max(q_values) - self.values[predecessor])
+          if diff > self.theta:
+            PQ.update(predecessor, -diff)
+
+    
+
